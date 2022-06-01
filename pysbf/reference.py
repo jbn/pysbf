@@ -1,24 +1,11 @@
+import os
 import subprocess
 import shlex
 
 from pydantic import BaseModel
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
-
-"""
-K 10000
-maxMembershipsPerVertex 5
-% evalRatio is the fraction of nodes we will sample to calculate precision/recall.
-% its worth having this explicitly
-proposalStrategy MultipleMembershipLikelihood
-outputByRowsFile odysee_trimmed.vertexAssignments
-maxEpoch 10
-"""
-
-
-_NON_PARAM_NAMES = {'name', 'output_dir'}
-_SPECIAL_CASES = {'k': 'K'}
 
 
 class Experiment(BaseModel):
@@ -33,13 +20,11 @@ class Experiment(BaseModel):
     proposal_strategy: Optional[str] = 'MultipleMembershipLikelihood'
     max_epoch: Optional[int] = 10
 
-    def run(self, jar_path: Path) -> str:
+    def run(self, jar_path: Path) -> List[str]:
         config_path = self.write_config(self.name)
 
         # Run the experiment
         command = f"java -jar {jar_path} {config_path}"
-        print(command)
-        print(shlex.split(command))
         process = subprocess.Popen(
             shlex.split(command),
             stderr=subprocess.PIPE,
@@ -53,21 +38,20 @@ class Experiment(BaseModel):
                 break
 
             if line:
-                #print(line.strip())
                 lines.append(line)
 
         rc = process.poll()
         if rc != 0:
             raise RuntimeError(f"An error occurred {rc}")
 
-        # Save the standard out
+        # Save the standard error (results)
         with (self.output_dir / f"{self.name}.output").open('w') as fp:
             for line in lines:
                 fp.write(line)
 
         return lines
 
-    def write_config(self, experiment_name: str):
+    def write_config(self, experiment_name: str) -> Path:
         output_path = self.output_dir / f"{experiment_name}.config"
         assert not output_path.exists(), f"{output_path} exists!"
 
@@ -83,7 +67,6 @@ class Experiment(BaseModel):
                 k = k[0].lower() + k[1:]
 
             lines.append(f"{k} {v}")
-            print(lines[-1])
 
         with output_path.open("w") as fp:
             fp.write("\n".join(lines) + "\n")
@@ -91,8 +74,13 @@ class Experiment(BaseModel):
         return output_path
 
 
+def sbf_jar_path() -> Path:
+    if (jar_path := os.environ.get("SBF_JAR_PATH")) is not None:
+        return Path(jar_path)
+    return Path(__file__).parent.parent / "sbf-1.0.0.jar"
 
 
-
+_NON_PARAM_NAMES = {'name', 'output_dir'}
+_SPECIAL_CASES = {'k': 'K'}
 
 

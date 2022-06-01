@@ -1,6 +1,5 @@
 from pathlib import Path
-
-from pysbf.reference import Experiment
+from pysbf.reference import Experiment, sbf_jar_path
 from pysbf.metis import write_metis
 
 
@@ -14,5 +13,5 @@ def test_experiment(tmp_path: Path, G_unweighted):
         output_dir=tmp_path
     )
 
-    got = experiment.run(Path("/Users/generativist/Projects/pysbf/sbf-1.0.0.jar"))
+    got = experiment.run(sbf_jar_path())
     assert len(got) > 0
