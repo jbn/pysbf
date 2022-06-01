@@ -1,23 +1,29 @@
 import pytest
-from scipy.sparse import dok_matrix
+from scipy.sparse import dok_matrix, csr_matrix
 
 
 @pytest.fixture()
-def G_weighted():
+def G_unweighted() -> csr_matrix:
+    """
+    :return: unweighted 8x8 matrix as per twitter/sbf examples
+    """
     G = dok_matrix((8, 8))
 
     for i, j, v in EXPECTED_COORDS:
-        G[i, j] = v
+        G[i, j] = 1
 
     return G.tocsr()
 
 
 @pytest.fixture()
-def G_unweighted():
+def G_weighted() -> csr_matrix:
+    """
+    :return: weighted 8x8 matrix with weights as per twitter/sbf examples
+    """
     G = dok_matrix((8, 8))
 
     for i, j, v in EXPECTED_COORDS:
-        G[i, j] = 1
+        G[i, j] = v
 
     return G.tocsr()
 
