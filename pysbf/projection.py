@@ -10,6 +10,7 @@ def build_R_projection(
     top_k_R_nodes: Optional[int] = 100_000,
     L_node_degree_upper_bound: Optional[int] = 5_000,
     L_node_prune_max_iter: int = 100,
+    normalize_rows_before_computing_similarity: bool=True,
     prune_similarity_to_percentile: Optional[float] = None,
     prune_similarity_below: Optional[float] = None,
 ):
@@ -43,7 +44,10 @@ def build_R_projection(
     L_i_to_v = list(L_nodes)
     L_v_to_i = {v: i for i, v in enumerate(L_i_to_v)}
 
-    G = _build_similarity_matrix(B, R_nodes, L_v_to_i, L_i_to_v, R_v_to_i, R_i_to_v, prune_similarity_to_percentile)
+    G = _build_similarity_matrix(
+        B, R_nodes, L_v_to_i, L_i_to_v, R_v_to_i, R_i_to_v, prune_similarity_to_percentile,
+        normalize_rows=normalize_rows_before_computing_similarity
+    )
 
     pruned_G = False
     if prune_similarity_to_percentile is not None:
@@ -156,7 +160,6 @@ def _build_similarity_matrix(
     L_i_to_v: Sequence[Any],
     R_v_to_i: Dict[Any, int],
     R_i_to_v: Sequence[Any],
-    prune_percentile: Optional[float],
     normalize_rows: bool = True
 
 ) -> csr_matrix:
