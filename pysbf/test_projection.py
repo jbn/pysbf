@@ -84,7 +84,6 @@ def test__build_similarity_matrix():
         [1, 2, 3],
         {'a': 0, 'b': 1, 'c': 2},
         list('abc'),
-        prune_percentile=False
     )
 
     expected = np.array(

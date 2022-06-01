@@ -14,7 +14,7 @@ import pandas as pd
 from pathlib import Path
 from pysbf.projection import build_R_projection
 from pysbf.metis import write_metis
-from pysbf.reference import Experiment, sbf_jar_path
+from pysbf.reference import Experiment, sbf_jar_path, load_assignments
 
 
 # Load your user items
@@ -41,7 +41,11 @@ experiment = Experiment(
     output_dir=output_path
 )
 
-sbf_output_lines = experiment.run(sbf_jar_path())
+# Run it
+experiment.run(sbf_jar_path())
+
+# Retrieve the Cluster -> {R_Node, ...} map
+assignments = load_assignments(experiment.assignments_path, R_i_to_v)
 ```
 
 then,

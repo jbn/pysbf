@@ -1,11 +1,11 @@
 import os
 import subprocess
 import shlex
+from collections import defaultdict
 
 from pydantic import BaseModel
 from pathlib import Path
-from typing import Optional, List
-
+from typing import Optional, List, Sequence, Any, Dict, Set
 
 
 class Experiment(BaseModel):
@@ -20,11 +20,11 @@ class Experiment(BaseModel):
     proposal_strategy: Optional[str] = 'MultipleMembershipLikelihood'
     max_epoch: Optional[int] = 10
 
-    def run(self, jar_path: Path) -> List[str]:
-        config_path = self.write_config(self.name)
+    def run(self, jar_path: Path):
+        self.write_config()
 
         # Run the experiment
-        command = f"java -jar {jar_path} {config_path}"
+        command = f"java -jar {jar_path} {self.config_path}"
         process = subprocess.Popen(
             shlex.split(command),
             stderr=subprocess.PIPE,
@@ -45,17 +45,27 @@ class Experiment(BaseModel):
             raise RuntimeError(f"An error occurred {rc}")
 
         # Save the standard error (results)
-        with (self.output_dir / f"{self.name}.output").open('w') as fp:
+        with self.outputs_path.open('w') as fp:
             for line in lines:
                 fp.write(line)
 
-        return lines
+    @property
+    def config_path(self) -> Path:
+        return self.output_dir / f"{self.name}.config"
 
-    def write_config(self, experiment_name: str) -> Path:
-        output_path = self.output_dir / f"{experiment_name}.config"
+    @property
+    def assignments_path(self) -> Path:
+        return self.output_dir / f"{self.name}_assignments.txt"
+
+    @property
+    def outputs_path(self) -> Path:
+        return self.output_dir / f"{self.name}.output"
+
+    def write_config(self) -> Path:
+        output_path = self.config_path
         assert not output_path.exists(), f"{output_path} exists!"
 
-        lines = [f'outputByRowsFile {str(self.output_dir / (self.name + "_assignments.txt"))}']
+        lines = [f'outputByRowsFile {str(self.assignments_path)}']
 
         for k, v in self.__dict__.items():
             if k in _NON_PARAM_NAMES:
@@ -78,6 +88,19 @@ def sbf_jar_path() -> Path:
     if (jar_path := os.environ.get("SBF_JAR_PATH")) is not None:
         return Path(jar_path)
     return Path(__file__).parent.parent / "sbf-1.0.0.jar"
+
+
+def load_assignments(path: Path, R_i_to_v: Sequence[Any]) -> Dict[Any, Set[int]]:
+    clusters = defaultdict(set)
+
+    with path.open() as fp:
+        for claim_i, cluster_assignments in enumerate(fp):
+            claim_id = R_i_to_v[claim_i]
+
+            for cluster in (int(part) for part in cluster_assignments.split()):
+                clusters[cluster-1].add(claim_id)
+
+    return dict(clusters)
 
 
 _NON_PARAM_NAMES = {'name', 'output_dir'}
