@@ -54,3 +54,7 @@ then,
 head output/my_experiment_assignments.txt
 head output/my_experiment_output.txt
 ```
+
+# Should I use this?
+
+Almost certainly not, no.
