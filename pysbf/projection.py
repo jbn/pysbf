@@ -45,7 +45,7 @@ def build_R_projection(
     L_v_to_i = {v: i for i, v in enumerate(L_i_to_v)}
 
     G = _build_similarity_matrix(
-        B, R_nodes, L_v_to_i, L_i_to_v, R_v_to_i, R_i_to_v, prune_similarity_to_percentile,
+        B, R_nodes, L_v_to_i, L_i_to_v, R_v_to_i, R_i_to_v,
         normalize_rows=normalize_rows_before_computing_similarity
     )
 
