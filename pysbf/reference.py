@@ -2,10 +2,18 @@ import os
 import subprocess
 import shlex
 from collections import defaultdict
+from enum import Enum
 
 from pydantic import BaseModel
 from pathlib import Path
 from typing import Optional, List, Sequence, Any, Dict, Set
+
+
+class ProposalStrategy(str, Enum):
+    FractionOfNeighborhoods = 'FractionOfNeighborhoods'
+    FractionOfNeighborsAndCluster = 'FractionOfNeighborsAndCluster'
+    SingleOrZeroMembershipLikelihood = 'SingleOrZeroMembershipLikelihood'
+    MultipleMembershipLikelihood = 'MultipleMembershipLikelihood'
 
 
 class Experiment(BaseModel):
@@ -13,12 +21,29 @@ class Experiment(BaseModel):
     metis_file: Path
     output_dir: Path
 
+    cpu: Optional[int] = 10
     k: Optional[int] = 10_000
-    eval_ratio: Optional[float] = 0.1
-    random_seed: Optional[int] = 42
-    max_memberships_per_vertex: Optional[int] = 5
-    proposal_strategy: Optional[str] = 'MultipleMembershipLikelihood'
+    scale_coef: Optional[float] = None
     max_epoch: Optional[int] = 10
+    eps: Optional[float] = None
+    eval_ratio: Optional[float] = 0.1
+    eval_every: Optional[int] = None
+    update_immediately: Optional[bool] = None
+    no_locking: Optional[bool] = None
+    min_cluster_size: Optional[int] = None
+    random_seed: Optional[int] = 42
+    proposal_strategy: Optional[ProposalStrategy] = ProposalStrategy.MultipleMembershipLikelihood
+    max_memberships_per_vertex: Optional[int] = 5
+    init_from_nonoverlapping_neighborhood: Optional[bool] = None
+    init_from_random_neighborhood: Optional[bool] = None
+    init_from_best_neighborhood: Optional[bool] = None
+    run_all_epochs: Optional[bool] = None
+    use_weight_coeff_for_proposal: Optional[bool] = None
+    divide_result_into_connected_components: Optional[bool] = None
+    remove_weak_links_for_connected_components: Optional[bool] = None
+    wt_coeff: Optional[float] = None
+    use_temperature_schedule: Optional[bool] = None
+    max_temperature: Optional[float] = None
 
     def run(self, jar_path: Path):
         self.write_config()
