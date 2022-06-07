@@ -23,7 +23,7 @@ class Experiment(BaseModel):
 
     cpu: Optional[int] = 10
     k: Optional[int] = 10_000
-    scale_coef: Optional[float] = None
+    scale_coeff: Optional[float] = None
     max_epoch: Optional[int] = 10
     eps: Optional[float] = None
     eval_ratio: Optional[float] = 0.1
@@ -67,7 +67,8 @@ class Experiment(BaseModel):
 
         rc = process.poll()
         if rc != 0:
-            raise RuntimeError(f"An error occurred {rc}")
+            err_msg = "\n".join(lines)
+            raise RuntimeError(f"An error occurred {rc}: {err_msg}")
 
         # Save the standard error (results)
         with self.outputs_path.open('w') as fp:
@@ -101,7 +102,8 @@ class Experiment(BaseModel):
                 k = k.replace('_', ' ').title().replace(' ', '')
                 k = k[0].lower() + k[1:]
 
-            lines.append(f"{k} {v}")
+            if v is not None:
+                lines.append(f"{k} {v}")
 
         with output_path.open("w") as fp:
             fp.write("\n".join(lines) + "\n")
